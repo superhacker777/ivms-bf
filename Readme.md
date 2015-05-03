@@ -24,13 +24,7 @@ I only care about Linux support now, so there's no way of making it work on Wind
 
 Command to start bruteforce in 265 threads with IPs list stored in file "ips_file":
 
-    $ ivms-bf -t 265 -i ips_file 2> /dev/null
-
-Yeah, you'll probably want to ignore STDERR messages because they're very noisy. It isn't my fault, though. It is somewhere in SDK lib.
-
-__UPD__: Now I have this library patched. Make with:
-
-    $ make silent
+    $ ivms-bf -t 265 -i ips_file
 
 You could also pass an IP list as an argument, which is helpful when you want to check a short list of cameras:
 

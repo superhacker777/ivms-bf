@@ -11,7 +11,7 @@ vanilla:
 	$(CC) $(CFLAGS) $(LIB) src/main.cpp -o ivms-bf
 
 windows:
-	i686-w64-mingw32-g++ -std=c++11 -m32 -Wall -Llib/Windows -Wl,-rpath=lib/Windows -lHCNetSDK src/main.cpp -o ivms-bf.exe
+	i686-w64-mingw32-g++ -std=c++11 -m32 -Werror -static-libgcc -static-libstdc++ src/main.cpp -Llib/Windows -Wl,-rpath=lib/Windows -lHCNetSDK -o ivms-bf.exe -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
 
 clean:
 	rm ivms-bf

@@ -8,87 +8,105 @@
 #define _HC_NET_SDK_H_
 
 #ifndef __PLAYRECT_defined
-#define __PLAYRECT_defined
-typedef struct __PLAYRECT
-{
-    int x;                                
-    int y;                                   
-    int uWidth;                             
-    int uHeight;                             
-}PLAYRECT; 
+  #define __PLAYRECT_defined
+  typedef struct __PLAYRECT
+  {
+      int x;                                
+      int y;                                   
+      int uWidth;                             
+      int uHeight;                             
+  } PLAYRECT; 
 #endif
 
-#if (defined(_WIN32)) //windows
-// #define NET_DVR_API  extern "C"__declspec(dllimport)
-typedef  unsigned _int64 UINT64;
-#elif defined(__linux__) || defined(__APPLE__) //linux
-typedef     unsigned int    DWORD;
-typedef     unsigned short  WORD;
-typedef     unsigned short  USHORT;
-typedef     int            LONG;
-typedef  	unsigned char	BYTE ;
-#define     BOOL int
-typedef     unsigned int   	UINT;
-typedef 	void* 			LPVOID;
-typedef 	void* 			HANDLE;
-typedef     unsigned int*  LPDWORD; 
-typedef  unsigned long long UINT64;
-
-#ifndef    TRUE
-#define    TRUE	1
-#endif
-#ifndef    FALSE
-#define	   FALSE 0
-#endif
-#ifndef    NULL
-#define	   NULL 0
+#if defined(_WIN32)
+ //#define NET_DVR_API  extern "C" __declspec(dllimport)
+  
+  #ifndef __MINGW32__
+    typedef  unsigned _int64 UINT64;
+  #else
+    typedef unsigned long long UINT64;
+  #endif
 #endif
 
-#define __stdcall 
-#define CALLBACK  
+#if defined(__linux__) || defined(__APPLE__) || defined(__MINGW32__) // *nix
+  #define     BOOL  int
+  // typedef     unsigned int        DWORD;
+  // typedef     unsigned short      WORD;
+  // typedef     unsigned short      USHORT;
+  // typedef     int                 LONG;
+  // typedef     unsigned char       BYTE ;
+  // typedef     unsigned int        UINT;
+  // typedef     void*               LPVOID;
+  // typedef     void*               HANDLE;
+  // typedef     unsigned int*       LPDWORD; 
+  // typedef     unsigned long long  UINT64;
 
-#if defined(__cplusplus)
-	#define NET_DVR_API extern "C"
-#else
-	#define NET_DVR_API 
-#endif
+  #include <stdint.h>  
+  typedef uint32_t    DWORD;
+  typedef uint16_t    WORD;
+  typedef uint16_t    SHORT;
+  typedef uint16_t    USHORT;
+  typedef int32_t     LONG;
+  typedef uint8_t     BYTE;
+  typedef uint32_t    UINT;
+  typedef void*       LPVOID;
+  typedef void*       HANDLE;
+  typedef uint32_t *  LPDWORD;
+  typedef uint64_t    UINT64;
 
-// #define NET_DVR_API extern "C"
-typedef unsigned int   COLORKEY;
-typedef unsigned int    COLORREF;
+  #ifndef    TRUE
+    #define    TRUE 1
+  #endif
+  #ifndef    FALSE
+    #define    FALSE 0
+  #endif
+  #ifndef    NULL
+    #define    NULL 0
+  #endif
 
-#ifndef __HWND_defined
-#define __HWND_defined
-	#if defined(__linux__)
-		typedef unsigned int HWND;
-	#else
-		typedef void* HWND;
-	#endif
-#endif
+  
+  #ifdef __linux__
+    #define __stdcall 
+  #endif
+  #define CALLBACK  
 
-// #define NET_DVR_API extern "C"
-typedef unsigned int   COLORKEY; 
-typedef unsigned int    COLORREF; 
+  #ifndef __cplusplus
+    #define NET_DVR_API 
+  #else
+    #define NET_DVR_API extern "C"
+  #endif
 
-#ifndef __HDC_defined
-#define __HDC_defined
-#if defined(__linux__)
-typedef struct __DC
-{
-    void*   surface;        //SDL Surface
-    HWND    hWnd;           // HDC window handle
-    }DC;
-	typedef DC* HDC;
-	#else
-	typedef void* HDC;
-	#endif
-#endif
+  typedef unsigned int   COLORKEY;
+  typedef unsigned int    COLORREF;
 
-typedef struct tagInitInfo
-{
-	int uWidth; 
-	int uHeight; 
-}INITINFO; 
+  #ifndef __HWND_defined
+    #define __HWND_defined
+    #ifdef __linux__
+      typedef unsigned int HWND;
+    #else
+      typedef void* HWND;
+    #endif
+  #endif
+
+  #ifndef __HDC_defined
+    #define __HDC_defined
+    #ifdef __linux__
+      typedef struct __DC
+      {
+        void*   surface;        //SDL Surface
+        HWND    hWnd;           // HDC window handle
+      } DC;
+      typedef DC* HDC;
+    #else
+      typedef void* HDC;
+    #endif
+  #endif
+
+  typedef struct tagInitInfo
+  {
+    int uWidth; 
+    int uHeight; 
+  } INITINFO;
 #endif
 
 //Macro definition 
@@ -13055,19 +13073,19 @@ NET_DVR_API BOOL __stdcall NET_DVR_Cleanup();
 
 //NET_DVR_SetDVRMessage extension
 #ifdef _WIN32
-NET_DVR_API BOOL __stdcall NET_DVR_SetDVRMessage(UINT nMessage,HWND hWnd);
-NET_DVR_API BOOL __stdcall NET_DVR_SetExceptionCallBack_V30(UINT nMessage, HWND hWnd, void (CALLBACK* fExceptionCallBack)(DWORD dwType, LONG lUserID, LONG lHandle, void *pUser), void *pUser);
+  NET_DVR_API BOOL __stdcall NET_DVR_SetDVRMessage(UINT nMessage,HWND hWnd);
+  NET_DVR_API BOOL __stdcall NET_DVR_SetExceptionCallBack_V30(UINT nMessage, HWND hWnd, void (CALLBACK* fExceptionCallBack)(DWORD dwType, LONG lUserID, LONG lHandle, void *pUser), void *pUser);
 #elif defined(__linux__) || defined(__APPLE__)
-NET_DVR_API BOOL __stdcall NET_DVR_SetExceptionCallBack_V30(UINT reserved1, void* reserved2, void (CALLBACK* fExceptionCallBack)(DWORD dwType, LONG lUserID, LONG lHandle, void *pUser), void *pUser);
-/*Linux*/
-#if defined(__linux__)
-#if defined(__cplusplus)
-	NET_DVR_API BOOL NET_DVR_DrawAreaInit(INITINFO InitInfo, DWORD iUseSDL = 1);
-#else
-	NET_DVR_API BOOL NET_DVR_DrawAreaInit(INITINFO InitInfo, DWORD iUseSDL);
-#endif
-NET_DVR_API BOOL NET_DVR_DrawAreaRelease();
-#endif
+  NET_DVR_API BOOL __stdcall NET_DVR_SetExceptionCallBack_V30(UINT reserved1, void* reserved2, void (CALLBACK* fExceptionCallBack)(DWORD dwType, LONG lUserID, LONG lHandle, void *pUser), void *pUser);
+  /*Linux*/
+  #ifdef __linux__
+    #ifdef __cplusplus
+	    NET_DVR_API BOOL NET_DVR_DrawAreaInit(INITINFO InitInfo, DWORD iUseSDL = 1);
+    #else
+	     NET_DVR_API BOOL NET_DVR_DrawAreaInit(INITINFO InitInfo, DWORD iUseSDL);
+    #endif
+    NET_DVR_API BOOL NET_DVR_DrawAreaRelease();
+  #endif
 #endif
 
 NET_DVR_API BOOL __stdcall NET_DVR_SetDVRMessCallBack(BOOL (CALLBACK *fMessCallBack)(LONG lCommand,char *sDVRIP,char *pBuf,DWORD dwBufLen));
@@ -13077,7 +13095,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_SetDVRMessageCallBack(BOOL (CALLBACK *fMessag
 typedef void (CALLBACK *MSGCallBack)(LONG lCommand, NET_DVR_ALARMER *pAlarmer, char *pAlarmInfo, DWORD dwBufLen, void* pUser);
 NET_DVR_API BOOL __stdcall NET_DVR_SetDVRMessageCallBack_V30(MSGCallBack fMessageCallBack, void* pUser);
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API BOOL __stdcall NET_DVR_SetConnectTime(DWORD dwWaitTime = 3000, DWORD dwTryTimes = 3);
 	NET_DVR_API BOOL __stdcall NET_DVR_SetReconnect(DWORD dwInterval = 30000, BOOL bEnableRecon = TRUE);
 #else
@@ -13090,7 +13108,7 @@ NET_DVR_API int __stdcall NET_DVR_IsSupport();
 NET_DVR_API BOOL __stdcall NET_DVR_StartListen(char *sLocalIP,WORD wLocalPort);
 NET_DVR_API BOOL __stdcall NET_DVR_StopListen();
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API LONG __stdcall NET_DVR_StartListen_V30(char *sLocalIP, WORD wLocalPort, MSGCallBack DataCallback, void* pUserData = NULL);
 #else
 	NET_DVR_API LONG __stdcall NET_DVR_StartListen_V30(char *sLocalIP, WORD wLocalPort, MSGCallBack DataCallback, void* pUserData);
@@ -13102,7 +13120,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_Login_Check(char *sDVRIP, WORD wDVRPort, char
 NET_DVR_API BOOL __stdcall NET_DVR_Logout(LONG lUserID);
 NET_DVR_API BOOL __stdcall NET_DVR_Logout_V30(LONG lUserID);
 NET_DVR_API DWORD __stdcall NET_DVR_GetLastError();
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API char* __stdcall NET_DVR_GetErrorMsg(LONG *pErrorNo = NULL);
 #else
 	NET_DVR_API char* __stdcall NET_DVR_GetErrorMsg(LONG *pErrorNo);
@@ -13112,7 +13130,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_GetDVRIPByResolveSvr(char *sServerIP, WORD wS
 NET_DVR_API BOOL  __stdcall NET_DVR_GetDVRIPByResolveSvr_EX(char *sServerIP, WORD wServerPort, BYTE *sDVRName, WORD wDVRNameLen, BYTE *sDVRSerialNumber, WORD wDVRSerialLen, char* sGetIP, DWORD *dwPort);
 
 //Preview releated interface
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API LONG __stdcall NET_DVR_PlayDirect(char *sDVRIP, char *sUserName, char *sPassword, \
 												  LPNET_DVR_CLIENTINFO lpClientInfo, void(CALLBACK *fRealDataCallBack_V30) (LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser) = NULL, void* pUser = NULL, BOOL bBlocked = FALSE);
 #else
@@ -13120,7 +13138,7 @@ NET_DVR_API BOOL  __stdcall NET_DVR_GetDVRIPByResolveSvr_EX(char *sServerIP, WOR
 												  LPNET_DVR_CLIENTINFO lpClientInfo, void(CALLBACK *fRealDataCallBack_V30) (LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser), void* pUser, BOOL bBlocked);
 #endif
 NET_DVR_API LONG __stdcall NET_DVR_RealPlay(LONG lUserID,LPNET_DVR_CLIENTINFO lpClientInfo);
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API LONG __stdcall NET_DVR_RealPlay_V30(LONG lUserID, LPNET_DVR_CLIENTINFO lpClientInfo, void(CALLBACK *fRealDataCallBack_V30) (LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser) = NULL, void* pUser = NULL, BOOL bBlocked = FALSE);
 #else
 	NET_DVR_API LONG __stdcall NET_DVR_RealPlay_V30(LONG lUserID, LPNET_DVR_CLIENTINFO lpClientInfo, void(CALLBACK *fRealDataCallBack_V30) (LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser), void* pUser, BOOL bBlocked);
@@ -13241,7 +13259,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_SendTo232Port(LONG lUserID, char *pSendBuf, D
 NET_DVR_API BOOL __stdcall NET_DVR_SendToSerialPort(LONG lUserID, DWORD dwSerialPort, DWORD dwSerialIndex, char *pSendBuf, DWORD dwBufSize);
 
 //Decoding nBitrate = 16000
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API void* __stdcall NET_DVR_InitG722Decoder(int nBitrate = 16000);
 #else
 	NET_DVR_API void* __stdcall NET_DVR_InitG722Decoder(int nBitrate);
@@ -13289,7 +13307,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_GetSerialNum_Card(long lChannelNum,DWORD *pDe
 NET_DVR_API LONG __stdcall NET_DVR_FindDVRLog(LONG lUserID, LONG lSelectMode, DWORD dwMajorType,DWORD dwMinorType, LPNET_DVR_TIME lpStartTime, LPNET_DVR_TIME lpStopTime);
 NET_DVR_API LONG __stdcall NET_DVR_FindNextLog(LONG lLogHandle, LPNET_DVR_LOG lpLogData);
 NET_DVR_API BOOL __stdcall NET_DVR_FindLogClose(LONG lLogHandle);
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API LONG __stdcall NET_DVR_FindDVRLog_V30(LONG lUserID, LONG lSelectMode, DWORD dwMajorType,DWORD dwMinorType, LPNET_DVR_TIME lpStartTime, LPNET_DVR_TIME lpStopTime, BOOL bOnlySmart = FALSE);
 #else
 	NET_DVR_API LONG __stdcall NET_DVR_FindDVRLog_V30(LONG lUserID, LONG lSelectMode, DWORD dwMajorType,DWORD dwMinorType, LPNET_DVR_TIME lpStartTime, LPNET_DVR_TIME lpStopTime, BOOL bOnlySmart);
@@ -13439,7 +13457,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_GetConfigFile_EX(LONG lUserID, char *sOutBuff
 NET_DVR_API BOOL __stdcall NET_DVR_SetConfigFile_EX(LONG lUserID, char *sInBuffer, DWORD dwInSize);
 
 //write log file
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API BOOL __stdcall NET_DVR_SetLogToFile(DWORD nLogLevel = 0, char * strLogDir = NULL, BOOL bAutoDel = TRUE);
 #else
 	NET_DVR_API BOOL __stdcall NET_DVR_SetLogToFile(DWORD nLogLevel, char * strLogDir, BOOL bAutoDel);
@@ -13522,7 +13540,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_FindDirectoryClose(LONG lFindHandle);
 
 typedef void (CALLBACK *REALDATACALLBACK) (LONG lPlayHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser);
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API LONG __stdcall NET_DVR_ZeroStartPlay(LONG lUserID, LPNET_DVR_CLIENTINFO lpClientInfo, REALDATACALLBACK fRealDataCallBack_V30 = NULL, void* pUser = NULL, BOOL bBlocked = TRUE);
 #else
 	NET_DVR_API LONG __stdcall NET_DVR_ZeroStartPlay(LONG lUserID, LPNET_DVR_CLIENTINFO lpClientInfo, REALDATACALLBACK fRealDataCallBack_V30, void* pUser, BOOL bBlocked);
@@ -13530,7 +13548,7 @@ typedef void (CALLBACK *REALDATACALLBACK) (LONG lPlayHandle, DWORD dwDataType, B
 
 NET_DVR_API BOOL __stdcall NET_DVR_ZeroStopPlay(LONG lPlayHandle);
 NET_DVR_API BOOL __stdcall NET_DVR_ZeroMakeKeyFrame(LONG lUserID, LONG lZeroChan);
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API BOOL __stdcall NET_DVR_PlayBackControl_V40(LONG lPlayHandle,DWORD dwControlCode, LPVOID lpInBuffer = NULL, DWORD dwInLen = 0, LPVOID lpOutBuffer = NULL, DWORD *lpOutLen = NULL);
 #else
 	NET_DVR_API BOOL __stdcall NET_DVR_PlayBackControl_V40(LONG lPlayHandle,DWORD dwControlCode, LPVOID lpInBuffer, DWORD dwInLen, LPVOID lpOutBuffer, DWORD *lpOutLen);
@@ -13662,7 +13680,7 @@ NET_DVR_API BOOL __stdcall NET_DVR_MatrixGetEncodeJoint(LONG lUserID, LONG lChan
 NET_DVR_API BOOL  __stdcall NET_DVR_GetLocalIP(char strIP[16][16], DWORD *pValidNum, BOOL *pEnableBind);
 NET_DVR_API BOOL  __stdcall NET_DVR_SetValidIP(DWORD dwIPIndex, BOOL bEnableBind);
 NET_DVR_API BOOL __stdcall NET_DVR_GetVcaDevWorkState(LONG lUserID, LPNET_DVR_VCA_DEV_WORKSTATUS lpWorkState);
-#if defined(__cplusplus)
+#ifdef __cplusplus
 	NET_DVR_API BOOL  __stdcall NET_DVR_SetRecvTimeOut(DWORD nRecvTimeOut = 5000); //最小3000毫秒
 #else
 	NET_DVR_API BOOL  __stdcall NET_DVR_SetRecvTimeOut(DWORD nRecvTimeOut); //最小3000毫秒
@@ -13856,4 +13874,4 @@ NET_DVR_API BOOL __stdcall NET_DVR_SetAudioChan(LONG lUserID, LPNET_DVR_AUDIO_SU
 NET_DVR_API BOOL __stdcall NET_DVR_GetAudioChanStatus(LONG lUserID, DWORD dwDispChan, LPNET_DVR_AUDIO_SURCHAN_STATUS lpAudioSurChanStatus);
 NET_DVR_API BOOL __stdcall NET_DVR_SetSDKLocalConfig(LPNET_DVR_SDKLOCAL_CFG lpSdkLocalCfg);
 NET_DVR_API BOOL __stdcall NET_DVR_GetSDKLocalConfig(LPNET_DVR_SDKLOCAL_CFG lpSdkLocalCfg);
-#endif //
+#endif

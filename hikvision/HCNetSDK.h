@@ -41,7 +41,7 @@
   // typedef     unsigned int*       LPDWORD; 
   // typedef     unsigned long long  UINT64;
 
-  #include <stdint.h>  
+  #include <stdint.h>
   typedef uint32_t    DWORD;
   typedef uint16_t    WORD;
   typedef uint16_t    SHORT;
@@ -76,8 +76,8 @@
     #define NET_DVR_API extern "C"
   #endif
 
-  typedef unsigned int   COLORKEY;
-  typedef unsigned int    COLORREF;
+  typedef unsigned int  COLORKEY;
+  typedef unsigned int  COLORREF;
 
   #ifndef __HWND_defined
     #define __HWND_defined
@@ -13114,9 +13114,10 @@ NET_DVR_API BOOL __stdcall NET_DVR_StopListen();
 	NET_DVR_API LONG __stdcall NET_DVR_StartListen_V30(char *sLocalIP, WORD wLocalPort, MSGCallBack DataCallback, void* pUserData);
 #endif
 NET_DVR_API BOOL __stdcall NET_DVR_StopListen_V30(LONG lListenHandle);
-NET_DVR_API LONG __stdcall NET_DVR_Login(char *sDVRIP,WORD wDVRPort,char *sUserName,char *sPassword,LPNET_DVR_DEVICEINFO lpDeviceInfo);
-NET_DVR_API LONG __stdcall NET_DVR_Login_V30(char *sDVRIP, WORD wDVRPort, char *sUserName, char *sPassword, LPNET_DVR_DEVICEINFO_V30 lpDeviceInfo);
-NET_DVR_API BOOL __stdcall NET_DVR_Login_Check(char *sDVRIP, WORD wDVRPort, char *sUserName, char *sPassword, LPNET_DVR_DEVICEINFO_V30 lpDeviceInfo);
+NET_DVR_API LONG __stdcall NET_DVR_Login(const char *sDVRIP, const WORD wDVRPort, const char *sUserName, const char *sPassword, LPNET_DVR_DEVICEINFO lpDeviceInfo);
+NET_DVR_API LONG __stdcall NET_DVR_Login_V30(const char *sDVRIP, const WORD wDVRPort, const char *sUserName, const char *sPassword, LPNET_DVR_DEVICEINFO_V30 lpDeviceInfo);
+// There's no such function
+// NET_DVR_API BOOL __stdcall NET_DVR_Login_Check(const char *sDVRIP, const WORD wDVRPort, const char *sUserName, const char *sPassword, LPNET_DVR_DEVICEINFO_V30 lpDeviceInfo);
 NET_DVR_API BOOL __stdcall NET_DVR_Logout(LONG lUserID);
 NET_DVR_API BOOL __stdcall NET_DVR_Logout_V30(LONG lUserID);
 NET_DVR_API DWORD __stdcall NET_DVR_GetLastError();
@@ -13326,7 +13327,7 @@ NET_DVR_API void* __stdcall NET_DVR_InitG722Encoder();
 NET_DVR_API BOOL __stdcall NET_DVR_EncodeG722Frame(void *pEncodeHandle,BYTE* pInBuffer, BYTE* pOutBuffer);
 NET_DVR_API void __stdcall NET_DVR_ReleaseG722Encoder(void *pEncodeHandle);
 //2005-09-15
-NET_DVR_API BOOL __stdcall NET_DVR_CaptureJPEGPicture(LONG lUserID, LONG lChannel, LPNET_DVR_JPEGPARA lpJpegPara, char *sPicFileName);
+NET_DVR_API BOOL __stdcall NET_DVR_CaptureJPEGPicture(LONG lUserID, LONG lChannel, LPNET_DVR_JPEGPARA lpJpegPara, const char *sPicFileName);
 //Grab JPEG and save to RAM
 NET_DVR_API BOOL __stdcall NET_DVR_CaptureJPEGPicture_NEW(LONG lUserID, LONG lChannel, LPNET_DVR_JPEGPARA lpJpegPara, char *sJpegPicBuffer, DWORD dwPicSize,  LPDWORD lpSizeReturned);
 

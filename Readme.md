@@ -1,4 +1,4 @@
-iVMS-bd — The Webcam Bruteforcer
+iVMS-bf — The Webcam Bruteforcer
 ---
 
 A simple webcam bruteforcer based on Hikvision SDK. WOW, much alpha, very bug, pls help.

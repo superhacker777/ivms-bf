@@ -5,7 +5,7 @@ LIB_DIR=lib/Linux
 CFLAGS=-std=c++11 -m32 -Wall -L$(LIB_DIR) -Wl,-rpath=$(LIB_DIR)
 
 all:
-	$(CC) $(CFLAGS) $(SILENT_LIB) -O2 src/main.cpp -o ivms-bf
+	$(CC) $(CFLAGS) -O2 src/main.cpp $(SILENT_LIB) -o ivms-bf
 	strip ivms-bf
 
 vanilla:

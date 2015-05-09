@@ -1,6 +1,6 @@
 CC=g++
 LIB_DIR=lib/Linux
-LIBS=-L$(LIB_DIR) -Wl,-rpath=$(LIB_DIR)
+LIBS=-L$(LIB_DIR) -Wl,-rpath=$(LIB_DIR) -lpthread
 LIB=-lhcnetsdk
 SILENT_LIB=-lsilenthcnetsdk
 CFLAGS=-std=c++11 -m32 -Wall

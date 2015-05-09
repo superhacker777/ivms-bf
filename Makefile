@@ -8,6 +8,9 @@ CFLAGS=-std=c++11 -m32 -Wall
 all:
 	$(CC) $(CFLAGS) -O2 src/main.cpp $(LIBS) $(SILENT_LIB) -o ivms-bf
 
+clang:
+	clang++ $(CFLAGS) -O2 src/main.cpp $(LIBS) $(SILENT_LIB) -o ivms-bf
+
 vanilla:
 	$(CC) $(CFLAGS) $(LIB) src/main.cpp -o ivms-bf
 

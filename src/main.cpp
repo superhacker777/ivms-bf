@@ -64,7 +64,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     sscanf(arg, "%hu", &arguments->port);
     break;
   case 'i':
-    &arguments->ips_file.assign(arg);
+    arguments->ips_file.assign(arg);
     break;
   case 'v':
     sscanf(arg, "%u", &arguments->verbosity);
@@ -174,7 +174,7 @@ void brute_camera(const std::string ip)
       if (PRINT_EVERYTHING)
         std::cout << "Trying " << login << ":" << password << " for " << ip << "..." << std::endl;
 
-      NET_DVR_DEVICEINFO device = {0};
+      NET_DVR_DEVICEINFO device = { {0} };
 
       long user_id = NET_DVR_Login( ip.c_str(),
                                     options.port,

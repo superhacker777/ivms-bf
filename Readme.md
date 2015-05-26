@@ -3,6 +3,8 @@ iVMS-bf — The Webcam Bruteforcer
 
 A simple webcam bruteforcer based on Hikvision SDK. WOW, much alpha, very bug, pls help.
 
+__UPD: Currently abandoned, [rewritten in Go](//github.com/superhacker777/hikka)__
+
 
 ## Building
 
